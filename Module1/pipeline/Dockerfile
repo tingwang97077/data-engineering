@@ -18,6 +18,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml uv.lock .python-version ./
 
 # ---- Copier le code après (cache stable)
-COPY pipeline.py ./
+COPY ingest_data.py ./
 
-ENTRYPOINT ["uv", "run", "python", "pipeline.py"]
+ENTRYPOINT ["uv", "run", "python", "ingest_data.py"]
