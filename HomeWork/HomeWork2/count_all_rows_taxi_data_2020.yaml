@@ -1,0 +1,73 @@
+id: count_all_rows_yellow_taxi_data_2020
+namespace: zoomcamp
+description: |
+  Load all months of Yellow Taxi data for a given year
+
+inputs:
+  - id: taxi
+    type: SELECT
+    displayName: Select taxi type
+    values: [yellow, green]
+    defaults: yellow
+
+  - id: year
+    type: SELECT
+    displayName: Select year
+    values: ["2019", "2020"]
+    defaults: "2020"
+    allowCustomValue: true
+
+tasks:
+  - id: create_table
+    type: io.kestra.plugin.gcp.bigquery.Query
+    sql: |
+      CREATE TABLE IF NOT EXISTS `{{kv('GCP_PROJECT_ID')}}.{{kv('GCP_DATASET')}}.{{inputs.taxi}}_tripdata_{{inputs.year}}`
+      (
+          VendorID STRING,
+          tpep_pickup_datetime TIMESTAMP,
+          tpep_dropoff_datetime TIMESTAMP,
+          passenger_count INTEGER,
+          trip_distance NUMERIC,
+          RatecodeID STRING,
+          store_and_fwd_flag STRING,
+          PULocationID STRING,
+          DOLocationID STRING,
+          payment_type INTEGER,
+          fare_amount NUMERIC,
+          extra NUMERIC,
+          mta_tax NUMERIC,
+          tip_amount NUMERIC,
+          tolls_amount NUMERIC,
+          improvement_surcharge NUMERIC,
+          total_amount NUMERIC,
+          congestion_surcharge NUMERIC
+      );
+
+  - id: process_all_months
+    type: io.kestra.plugin.core.flow.EachSequential
+    value: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
+    tasks:
+      - id: load_month
+        type: io.kestra.plugin.core.flow.Subflow
+        namespace: zoomcamp
+        flowId: 08_gcp_taxi
+        inputs:
+          taxi: "{{inputs.taxi}}"
+          year: "{{inputs.year}}"
+          month: "{{taskrun.value}}"
+        wait: true
+
+  - id: count_total_rows
+    type: io.kestra.plugin.gcp.bigquery.Query
+    sql: |
+      SELECT COUNT(*) as total_rows 
+      FROM `{{kv('GCP_PROJECT_ID')}}.{{kv('GCP_DATASET')}}.{{inputs.taxi}}_tripdata`;
+    fetchOne: true
+
+pluginDefaults:
+  - type: io.kestra.plugin.gcp
+    values:
+      serviceAccount: "{{kv('GCP_CREDS')}}"
+      projectId: "{{kv('GCP_PROJECT_ID')}}"
+      location: "{{kv('GCP_LOCATION')}}"
+      bucket: "{{kv('GCP_BUCKET_NAME')}}"
