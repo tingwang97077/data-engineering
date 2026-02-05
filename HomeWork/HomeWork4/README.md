@@ -125,4 +125,6 @@ What is the count of records in `stg_fhv_tripdata`?
 SELECT count(1) FROM `kestra-data-orchstration.zoomcamp.stg_fhv_tripdata` ;
 ```
 
+stg_fhv_tripdata file is in the folder : Module4-Analytics-Engineering/models/staging/stg_fhv_tripdata.sql
+
 Answer : 43,244,696
